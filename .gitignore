@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+
+# Virtual environments
+venv/
+venv*/
+.venv/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+*.db-wal
+*.db-shm
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local
+
+# Local files
+.vscode/
+.idea/
+.DS_Store
+*.log
+logs/
+*.tmp
+data_backup*/
