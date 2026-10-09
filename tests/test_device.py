@@ -87,6 +87,40 @@ class TestDeviceAdapter(unittest.TestCase):
         self.assertIsNotNone(m.noise_dbm)
         # Verify it doesn't fabricate frequency
         self.assertIsNone(m.frequency_hz)
+
+    def test_device_interface_simulator_auto_generation(self):
+        driver = SimulatorDriver()
+        driver.connect()
+        received = []
+        iface = DeviceInterface(driver, poll_interval=0.1)
+        iface.register_callback(lambda m: received.append(m))
+
+        m1 = iface.get_latest()
+        self.assertIsNotNone(m1)
+        self.assertEqual(len(received), 1)
+
+        # Wait past poll_interval to test stale auto-generation
+        time.sleep(0.12)
+        m2 = iface.get_latest()
+        self.assertIsNotNone(m2)
+        self.assertNotEqual(m1.timestamp, m2.timestamp)
+        self.assertGreaterEqual(len(received), 2)
+
+    def test_device_interface_stream_recovery(self):
+        driver = SimulatorDriver()
+        driver.connect()
+        iface = DeviceInterface(driver, poll_interval=0.1)
+        iface.start_stream()
+        self.assertTrue(iface._streaming)
+        self.assertIsNotNone(iface._thread)
+        self.assertTrue(iface._thread.is_alive())
+
+        # Simulate Gunicorn post-fork thread death (thread object not alive)
+        iface._thread = None
+        iface._ensure_stream_alive()
+        self.assertIsNotNone(iface._thread)
+        self.assertTrue(iface._thread.is_alive())
+        iface.stop_stream()
         
 if __name__ == '__main__':
     unittest.main()

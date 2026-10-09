@@ -170,11 +170,15 @@ def measurements_latest():
 @api_bp.route("/measurements/history")
 def measurements_history():
     try:
-        from database.db import get_measurements_since
+        from database.db import get_measurements_since, get_latest_measurements
         minutes = int(request.args.get("minutes", 5))
         limit   = int(request.args.get("limit", 2000))
         since   = datetime.now(timezone.utc) - timedelta(minutes=minutes)
         rows    = get_measurements_since(since.replace(tzinfo=None), limit=limit)
+        if not rows:
+            latest = get_latest_measurements(limit=min(limit, 200))
+            if latest:
+                rows = list(reversed(latest))
         return jsonify({"count": len(rows), "data": rows})
     except Exception as e:
         return jsonify(error_response(str(e))), 500
@@ -254,11 +258,32 @@ def analytics_compare():
 @api_bp.route("/analytics/timeseries")
 def analytics_timeseries():
     try:
-        from database.db import get_measurements_since
+        from database.db import get_measurements_since, get_latest_measurements
         minutes = int(request.args.get("minutes", 60))
         points  = int(request.args.get("points", 300))
         since   = datetime.now(timezone.utc) - timedelta(minutes=minutes)
         rows    = get_measurements_since(since.replace(tzinfo=None), limit=10000)
+        
+        # If time-based query returns empty (e.g. clock differences or initial startup),
+        # fall back to the most recent measurements from the database
+        if not rows:
+            latest = get_latest_measurements(limit=min(points, 300))
+            if latest:
+                rows = list(reversed(latest))
+
+        # If still empty, produce an initial measurement from the device interface
+        if not rows:
+            m = _iface().get_latest()
+            if m:
+                rows = [{
+                    "timestamp": m.timestamp,
+                    "signal_dbm": m.signal_dbm,
+                    "noise_dbm": m.noise_dbm,
+                    "snr_db": m.snr_db,
+                    "adc_value": m.adc_value,
+                    "detector_voltage": m.detector_voltage,
+                }]
+
         if len(rows) > points:
             step = max(1, len(rows) // points)
             rows = rows[::step]

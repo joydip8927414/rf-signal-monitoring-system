@@ -136,7 +136,9 @@ export default function SNRChart({ data = [], height = 180, enableZoom = true })
           <Area
             type="monotone" dataKey="snr" name="SNR"
             stroke="#3B82F6" strokeWidth={2}
-            fill="url(#snrGrad)" dot={false} isAnimationActive={false}
+            fill="url(#snrGrad)"
+            dot={displayData.length <= 1 ? { r: 4, fill: '#3B82F6' } : false}
+            isAnimationActive={false}
           />
           {showBrush && (
             <Brush

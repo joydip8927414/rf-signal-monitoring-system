@@ -70,7 +70,7 @@ export default function RFPowerChart({ data = [], height = 220, enableZoom = tru
                 display: 'flex', alignItems: 'center', gap: 3, fontFamily: 'JetBrains Mono, monospace',
                 opacity: zoomFactor >= 16 ? 0.5 : 1,
               }}
-              title="Zoom In (Magnify Spectrum)"
+              title="Zoom In (Magnify Power Trend)"
             >
               <ZoomIn size={11} /> + Zoom
             </button>
@@ -96,7 +96,7 @@ export default function RFPowerChart({ data = [], height = 220, enableZoom = tru
                   fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 4,
                   cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3, fontFamily: 'JetBrains Mono, monospace',
                 }}
-                title="Reset Spectrum View"
+                title="Reset Zoom"
               >
                 <RotateCcw size={11} /> Reset
               </button>
@@ -147,7 +147,7 @@ export default function RFPowerChart({ data = [], height = 220, enableZoom = tru
             name="Signal"
             stroke="#B7FF3C"
             strokeWidth={2}
-            dot={false}
+            dot={displayData.length <= 1 ? { r: 4, fill: '#B7FF3C' } : false}
             isAnimationActive={false}
           />
           <Line
@@ -156,7 +156,7 @@ export default function RFPowerChart({ data = [], height = 220, enableZoom = tru
             name="Noise Floor"
             stroke="#888"
             strokeWidth={1.5}
-            dot={false}
+            dot={displayData.length <= 1 ? { r: 3, fill: '#888' } : false}
             strokeDasharray="4 2"
             isAnimationActive={false}
           />

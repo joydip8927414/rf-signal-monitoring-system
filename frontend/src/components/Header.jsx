@@ -48,7 +48,7 @@ export default function Header() {
             border: `1px solid ${isPaused ? '#F59E0B' : '#B7FF3C'}`,
             transition: 'all 0.2s ease',
           }}
-          title={isPaused ? 'Resume live spectrum data updates' : 'Pause live spectrum data updates'}
+          title={isPaused ? 'Resume live RF measurement updates' : 'Pause live RF measurement updates'}
         >
           {isPaused ? (
             <>

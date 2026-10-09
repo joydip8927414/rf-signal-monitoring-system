@@ -79,6 +79,24 @@ class TestRFMonitorApp(unittest.TestCase):
         # Should NOT return the evil origin, depending on flask-cors behavior it might return nothing or default
         self.assertNotEqual(rv.headers.get('Access-Control-Allow-Origin'), 'https://evil.com')
 
+    def test_analytics_timeseries_structure(self):
+        rv = self.client.get('/api/analytics/timeseries?minutes=10&points=200')
+        self.assertEqual(rv.status_code, 200)
+        data = json.loads(rv.data)
+        self.assertIn('series', data)
+        self.assertIn('count', data)
+        if data['series']:
+            first = data['series'][0]
+            for key in ('t', 'sig', 'noise', 'snr', 'adc', 'vdet'):
+                self.assertIn(key, first)
+
+    def test_measurements_history_structure(self):
+        rv = self.client.get('/api/measurements/history?minutes=10&limit=50')
+        self.assertEqual(rv.status_code, 200)
+        data = json.loads(rv.data)
+        self.assertIn('data', data)
+        self.assertIn('count', data)
+
 
 if __name__ == '__main__':
     unittest.main()

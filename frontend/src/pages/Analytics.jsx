@@ -1,6 +1,6 @@
 // pages/Analytics.jsx
-import { useState, useMemo } from 'react';
-import { usePolled } from '../hooks/useRFData';
+import { useState, useMemo, useEffect } from 'react';
+import { usePolled, useLatestMeasurement } from '../hooks/useRFData';
 import { getAnalyticsTimeseries, getAnalyticsSummary } from '../services/api';
 import { useLive } from '../context/LiveContext';
 import ChartCard from '../components/ChartCard';
@@ -25,6 +25,7 @@ const TIME_OPTIONS = [5, 15, 30, 60];
 export default function Analytics() {
   const [minutes, setMinutes] = useState(30);
   const { isPaused, intervalMs } = useLive();
+  const [chartSeries, setChartSeries] = useState([]);
 
   const { data: tsData, loading } = usePolled(
     () => getAnalyticsTimeseries(minutes, 400),
@@ -38,8 +39,64 @@ export default function Analytics() {
     [minutes],
     isPaused
   );
+  const { data: m } = useLatestMeasurement(isPaused, intervalMs);
 
-  const series = useMemo(() => tsData?.series || [], [tsData]);
+  // Merge historical timeseries data into chartSeries
+  useEffect(() => {
+    if (!tsData?.series || !tsData.series.length) return;
+
+    setChartSeries((prev) => {
+      const map = new Map();
+      for (const pt of tsData.series) {
+        if (pt?.t) {
+          map.set(pt.t, {
+            t: pt.t,
+            sig: pt.sig != null ? Number(pt.sig) : null,
+            noise: pt.noise != null ? Number(pt.noise) : null,
+            snr: pt.snr != null ? Number(pt.snr) : null,
+            adc: pt.adc != null ? Number(pt.adc) : null,
+            vdet: pt.vdet != null ? Number(pt.vdet) : null,
+          });
+        }
+      }
+      for (const pt of prev) {
+        if (pt?.t) {
+          map.set(pt.t, pt);
+        }
+      }
+      const sorted = Array.from(map.values()).sort(
+        (a, b) => new Date(a.t).getTime() - new Date(b.t).getTime()
+      );
+      return sorted.length > 400 ? sorted.slice(-400) : sorted;
+    });
+  }, [tsData]);
+
+  // Append fresh live measurement to chart buffer
+  useEffect(() => {
+    if (isPaused || !m || !m.timestamp) return;
+
+    const newPoint = {
+      t: m.timestamp,
+      sig: m.signal_dbm != null ? Number(m.signal_dbm) : null,
+      noise: m.noise_dbm != null ? Number(m.noise_dbm) : null,
+      snr: m.snr_db != null ? Number(m.snr_db) : null,
+      adc: m.adc_value != null ? Number(m.adc_value) : null,
+      vdet: m.detector_voltage != null ? Number(m.detector_voltage) : null,
+    };
+
+    setChartSeries((prev) => {
+      if (prev.length > 0 && prev[prev.length - 1].t === newPoint.t) {
+        return prev;
+      }
+      if (prev.some((pt) => pt.t === newPoint.t)) {
+        return prev;
+      }
+      const updated = [...prev, newPoint];
+      return updated.length > 400 ? updated.slice(-400) : updated;
+    });
+  }, [m, isPaused]);
+
+  const series = chartSeries;
   const voltData = useMemo(() => series.map((r) => ({ t: r.t, vdet: r.vdet })), [series]);
   const adcData  = useMemo(() => series.map((r) => ({ t: r.t, adc: r.adc })), [series]);
   const sig      = summary?.signal_dbm;
@@ -74,7 +131,10 @@ export default function Analytics() {
               <button
                 key={m}
                 className={`btn btn-sm ${minutes === m ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setMinutes(m)}
+                onClick={() => {
+                  setMinutes(m);
+                  setChartSeries([]);
+                }}
                 id={`analytics-time-${m}`}
               >
                 {m}m
@@ -137,7 +197,7 @@ export default function Analytics() {
                 <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, fontFamily: 'JetBrains Mono' }}
                   formatter={(v) => [`${v?.toFixed(4)} V`, 'Detector']} labelFormatter={fmtTs} />
                 <Line type="monotone" dataKey="vdet" stroke="#8B5CF6" strokeWidth={2}
-                  dot={false} isAnimationActive={false} />
+                  dot={voltData.length <= 1 ? { r: 4, fill: '#8B5CF6' } : false} isAnimationActive={false} />
               </LineChart>
             </ResponsiveContainer>
           ) : <div className="chart-empty">No detector data</div>}
@@ -156,7 +216,7 @@ export default function Analytics() {
               <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, fontFamily: 'JetBrains Mono' }}
                 formatter={(v) => [v, 'ADC']} labelFormatter={fmtTs} />
               <Line type="monotone" dataKey="adc" stroke="#10B981" strokeWidth={1.5}
-                dot={false} isAnimationActive={false} />
+                dot={adcData.length <= 1 ? { r: 4, fill: '#10B981' } : false} isAnimationActive={false} />
             </LineChart>
           </ResponsiveContainer>
         ) : <div className="chart-empty">No ADC data</div>}

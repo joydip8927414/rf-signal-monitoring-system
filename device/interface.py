@@ -2,7 +2,7 @@ import logging
 import threading
 import time
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any, Callable
 
 from config import device_cfg
@@ -132,16 +132,57 @@ class DeviceInterface:
     # ------------------------------------------------------------------
     # Measurement
     # ------------------------------------------------------------------
-    def get_measurement(self) -> Optional[RFMeasurement]:
+    def _dispatch_callbacks(self, m: RFMeasurement) -> None:
+        for cb in self._callbacks:
+            try:
+                cb(m)
+            except Exception as exc:
+                logger.error('Stream callback error: %s', exc)
+
+    def _generate_and_dispatch(self) -> Optional[RFMeasurement]:
         m = self._driver.get_measurement()
         if m is not None:
             with self._lock:
                 self._latest = m
+            self._dispatch_callbacks(m)
         return m
 
+    def _ensure_stream_alive(self) -> None:
+        """Ensure background stream thread is running (e.g. after Gunicorn process fork)."""
+        if self._streaming and (self._thread is None or not self._thread.is_alive()):
+            logger.info('DeviceInterface: Stream thread was not alive, restarting stream loop...')
+            self._thread = threading.Thread(target=self._stream_loop, daemon=True)
+            self._thread.start()
+
+    def get_measurement(self) -> Optional[RFMeasurement]:
+        return self._generate_and_dispatch()
+
     def get_latest(self) -> Optional[RFMeasurement]:
+        self._ensure_stream_alive()
         with self._lock:
-            return self._latest
+            latest = self._latest
+
+        # In simulator mode, ensure fresh simulated measurements even if background thread
+        # is constrained or delayed in the hosting environment
+        is_simulator = getattr(self._driver, '__class__', None).__name__ == 'SimulatorDriver'
+        if is_simulator:
+            should_generate = False
+            if latest is None:
+                should_generate = True
+            else:
+                try:
+                    ts_str = latest.timestamp.replace('Z', '+00:00')
+                    dt = datetime.fromisoformat(ts_str)
+                    age_s = (datetime.now(timezone.utc) - dt).total_seconds()
+                    if age_s >= self._poll_interval:
+                        should_generate = True
+                except Exception:
+                    should_generate = True
+
+            if should_generate:
+                latest = self._generate_and_dispatch()
+
+        return latest
 
     # ------------------------------------------------------------------
     # Streaming
@@ -166,15 +207,7 @@ class DeviceInterface:
     def _stream_loop(self) -> None:
         while self._streaming:
             try:
-                m = self._driver.get_measurement()
-                if m is not None:
-                    with self._lock:
-                        self._latest = m
-                    for cb in self._callbacks:
-                        try:
-                            cb(m)
-                        except Exception as exc:
-                            logger.error('Stream callback error: %s', exc)
+                self._generate_and_dispatch()
             except Exception as exc:
                 logger.error('Stream poll error: %s', exc)
             time.sleep(self._poll_interval)

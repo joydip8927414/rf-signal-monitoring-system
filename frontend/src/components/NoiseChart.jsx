@@ -111,7 +111,9 @@ export default function NoiseChart({ data = [], height = 180, enableZoom = true 
             labelFormatter={fmt}
           />
           <Line type="monotone" dataKey="noise" name="Noise Floor"
-            stroke="#F59E0B" strokeWidth={2} dot={false} isAnimationActive={false} />
+            stroke="#F59E0B" strokeWidth={2}
+            dot={displayData.length <= 1 ? { r: 4, fill: '#F59E0B' } : false}
+            isAnimationActive={false} />
           {showBrush && (
             <Brush
               dataKey="t" height={26} stroke="#F59E0B" fill="#171717" tickFormatter={fmt}

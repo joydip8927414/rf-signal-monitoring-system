@@ -33,36 +33,65 @@ export default function Overview() {
 
   // Local chart buffer state
   const [chartSeries, setChartSeries] = useState([]);
-  const lastTsRef = useRef(null);
 
-  // Initialize chart series from initial timeseries data if state is empty
+  // Merge initial and polled timeseries history into chartSeries
   useEffect(() => {
-    if (tsData?.series && tsData.series.length > 0 && chartSeries.length === 0) {
-      setChartSeries(tsData.series);
-      lastTsRef.current = tsData.series[tsData.series.length - 1]?.t;
-    }
-  }, [tsData, chartSeries.length]);
+    if (!tsData?.series || !tsData.series.length) return;
+
+    setChartSeries((prev) => {
+      const map = new Map();
+      // Add incoming historical points
+      for (const pt of tsData.series) {
+        if (pt?.t) {
+          map.set(pt.t, {
+            t: pt.t,
+            sig: pt.sig != null ? Number(pt.sig) : null,
+            noise: pt.noise != null ? Number(pt.noise) : null,
+            snr: pt.snr != null ? Number(pt.snr) : null,
+            adc: pt.adc != null ? Number(pt.adc) : null,
+            vdet: pt.vdet != null ? Number(pt.vdet) : null,
+          });
+        }
+      }
+      // Add existing buffered points (retaining live updates)
+      for (const pt of prev) {
+        if (pt?.t) {
+          map.set(pt.t, pt);
+        }
+      }
+      // Sort chronologically by actual timestamp
+      const sorted = Array.from(map.values()).sort(
+        (a, b) => new Date(a.t).getTime() - new Date(b.t).getTime()
+      );
+      return sorted.length > 200 ? sorted.slice(-200) : sorted;
+    });
+  }, [tsData]);
 
   // Append fresh live measurement to chart buffer when LIVE
   useEffect(() => {
     if (isPaused || !m || !m.timestamp) return;
 
-    if (m.timestamp !== lastTsRef.current) {
-      lastTsRef.current = m.timestamp;
-      const newPoint = {
-        t: m.timestamp,
-        sig: m.signal_dbm,
-        noise: m.noise_dbm,
-        snr: m.snr_db,
-        adc: m.adc_value,
-        vdet: m.detector_voltage,
-      };
+    const newPoint = {
+      t: m.timestamp,
+      sig: m.signal_dbm != null ? Number(m.signal_dbm) : null,
+      noise: m.noise_dbm != null ? Number(m.noise_dbm) : null,
+      snr: m.snr_db != null ? Number(m.snr_db) : null,
+      adc: m.adc_value != null ? Number(m.adc_value) : null,
+      vdet: m.detector_voltage != null ? Number(m.detector_voltage) : null,
+    };
 
-      setChartSeries((prev) => {
-        const updated = [...prev, newPoint];
-        return updated.length > 200 ? updated.slice(-200) : updated;
-      });
-    }
+    setChartSeries((prev) => {
+      // Prevent duplicates if last item has identical timestamp
+      if (prev.length > 0 && prev[prev.length - 1].t === newPoint.t) {
+        return prev;
+      }
+      // Avoid duplicates anywhere in buffer
+      if (prev.some((pt) => pt.t === newPoint.t)) {
+        return prev;
+      }
+      const updated = [...prev, newPoint];
+      return updated.length > 200 ? updated.slice(-200) : updated;
+    });
   }, [m, isPaused]);
 
   const events = useMemo(() => evtData?.data || [], [evtData]);
