@@ -50,8 +50,8 @@ export default function Events() {
       </div>
 
       {/* Summary chips */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
-        <div className="card" style={{ padding: '12px 20px', flex: 1, textAlign: 'center' }}>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+        <div className="card" style={{ padding: '12px 20px', flex: '1 1 120px', textAlign: 'center' }}>
           <div className="metric-label">Total Events</div>
           <div className="metric-value" style={{ fontSize: 24 }}>{total}</div>
         </div>

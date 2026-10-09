@@ -44,9 +44,20 @@ export default function Sidebar({ mobileOpen, onClose }) {
     <aside className={`app-sidebar${mobileOpen ? ' open' : ''}`}>
       {/* Logo */}
       <div className="sidebar-logo">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <Radio size={18} color="#B7FF3C" style={{ flexShrink: 0 }} />
-          <div className="sidebar-logo-title">RF Monitor</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Radio size={18} color="#B7FF3C" style={{ flexShrink: 0 }} />
+            <div className="sidebar-logo-title">RF Monitor</div>
+          </div>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="sidebar-mobile-close"
+              aria-label="Close navigation menu"
+            >
+              ✕
+            </button>
+          )}
         </div>
         <div className="sidebar-logo-sub">Using ESP32 & ADC</div>
       </div>

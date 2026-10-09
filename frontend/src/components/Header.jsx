@@ -4,7 +4,7 @@ import { Pause, Play, Clock } from 'lucide-react';
 import { useDeviceStatus } from '../hooks/useRFData';
 import { useLive } from '../context/LiveContext';
 
-export default function Header() {
+export default function Header({ onMenuToggle }) {
   const [time, setTime] = useState(new Date());
   const { data: device } = useDeviceStatus();
   const { isPaused, togglePause, intervalMs, setIntervalMs } = useLive();
@@ -19,8 +19,20 @@ export default function Header() {
 
   return (
     <header className="app-header">
-      {/* Left — Brand */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      {/* Left — Brand & Mobile Hamburger Toggle */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {onMenuToggle && (
+          <button
+            onClick={onMenuToggle}
+            className="mobile-nav-toggle"
+            aria-label="Toggle navigation menu"
+            id="btn-mobile-menu-toggle"
+          >
+            <span className="hamburger-line" />
+            <span className="hamburger-line" />
+            <span className="hamburger-line" />
+          </button>
+        )}
         <div className="header-brand">
           <div className="header-title">RF Monitor</div>
           <div className="header-subtitle">ESP32 · AD8317 · AI/ML RF Analysis Platform</div>

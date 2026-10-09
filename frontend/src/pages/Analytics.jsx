@@ -121,12 +121,12 @@ export default function Analytics() {
   return (
     <div>
       <div className="page-header">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <h1 className="page-title">RF Analytics</h1>
             <p className="page-subtitle">Signal analysis, statistics, and trends</p>
           </div>
-          <div style={{ display: 'flex', gap: 6 }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {TIME_OPTIONS.map((m) => (
               <button
                 key={m}

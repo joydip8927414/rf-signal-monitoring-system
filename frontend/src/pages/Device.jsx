@@ -43,7 +43,7 @@ export default function Device() {
       {error && <div className="state-error" style={{ marginBottom: 16 }}>{error}</div>}
 
       {/* Device header card */}
-      <div className="card" style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 20 }}>
+      <div className="card" style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
         <div style={{
           width: 56, height: 56, borderRadius: 12,
           background: '#171717', display: 'flex', alignItems: 'center', justifyContent: 'center',

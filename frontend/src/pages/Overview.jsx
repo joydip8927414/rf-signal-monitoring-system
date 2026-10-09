@@ -101,14 +101,14 @@ export default function Overview() {
   return (
     <div>
       {/* Page header */}
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 className="page-title">Overview</h1>
           <p className="page-subtitle">Real-time broadband RF signal monitoring and analysis (AD8317)</p>
         </div>
 
         {/* Overview Live / Pause Control Bar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <button
             onClick={togglePause}
             style={{

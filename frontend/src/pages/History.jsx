@@ -36,12 +36,12 @@ export default function History() {
   return (
     <div>
       <div className="page-header">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <h1 className="page-title">History</h1>
             <p className="page-subtitle">Historical RF measurement records</p>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button className="btn btn-secondary btn-sm" onClick={refetch}>
               <RefreshCw size={12} /> Refresh
             </button>
