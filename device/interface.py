@@ -186,10 +186,29 @@ class DeviceInterface:
         status = self._driver.get_status()
         status['uptime_s'] = round(time.time() - self._start_time, 1)
         status['streaming'] = self._streaming
+        
+        # Override connection status if pushing data actively
+        if self.is_connected and not status.get('connected'):
+            status['connected'] = True
+            status['status'] = 'online'
+            
         return status
 
     @property
     def is_connected(self) -> bool:
+        # Check if we have received a recent PUSH measurement (within 30 seconds)
+        with self._lock:
+            latest = self._latest
+            
+        if latest and latest.data_source == 'real':
+            try:
+                ts_str = latest.timestamp.replace('Z', '+00:00')
+                dt = datetime.fromisoformat(ts_str)
+                if (datetime.now(timezone.utc) - dt).total_seconds() < 30:
+                    return True
+            except Exception:
+                pass
+                
         return self._driver.is_connected
 
 

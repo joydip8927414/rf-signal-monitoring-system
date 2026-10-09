@@ -16,7 +16,14 @@ class FlaskConfig:
     DEBUG = os.environ.get('FLASK_DEBUG', 'true').lower() == 'true'
     HOST = os.environ.get('FLASK_HOST', '127.0.0.1')
     PORT = int(os.environ.get('FLASK_PORT', '5000'))
-    CORS_ORIGINS = os.environ.get('CORS_ORIGINS', '*').split(',')
+    _default_origin = 'https://rf-signal-monitoring-system.vercel.app'
+    _origins_str = os.environ.get('CORS_ORIGINS', _default_origin)
+    if _origins_str == '*':
+        _origins_str = _default_origin
+        
+    CORS_ORIGINS = [o.strip() for o in _origins_str.split(',') if o.strip() and o.strip() != '*']
+    if _default_origin not in CORS_ORIGINS:
+        CORS_ORIGINS.append(_default_origin)
 
 
 class DatabaseConfig:

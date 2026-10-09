@@ -64,6 +64,21 @@ class TestRFMonitorApp(unittest.TestCase):
         data = json.loads(rv.data)
         self.assertIn('data_source', data)
 
+    def test_cors_headers_production_origin(self):
+        rv = self.client.options('/api/health', headers={'Origin': 'https://rf-signal-monitoring-system.vercel.app'})
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.headers.get('Access-Control-Allow-Origin'), 'https://rf-signal-monitoring-system.vercel.app')
+
+    def test_cors_headers_404(self):
+        rv = self.client.get('/api/does-not-exist', headers={'Origin': 'https://rf-signal-monitoring-system.vercel.app'})
+        self.assertEqual(rv.status_code, 404)
+        self.assertEqual(rv.headers.get('Access-Control-Allow-Origin'), 'https://rf-signal-monitoring-system.vercel.app')
+        
+    def test_cors_disallowed_origin(self):
+        rv = self.client.options('/api/health', headers={'Origin': 'https://evil.com'})
+        # Should NOT return the evil origin, depending on flask-cors behavior it might return nothing or default
+        self.assertNotEqual(rv.headers.get('Access-Control-Allow-Origin'), 'https://evil.com')
+
 
 if __name__ == '__main__':
     unittest.main()

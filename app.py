@@ -116,6 +116,15 @@ def create_app() -> Flask:
     iface.start_stream()
     logger.info('Measurement stream started (source=%s)', device_cfg.SOURCE)
 
+    # -- Global Error Handlers (Ensures CORS on 404/500) -------------------
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        from werkzeug.exceptions import HTTPException
+        if isinstance(e, HTTPException):
+            return jsonify(error=e.description), e.code
+        logger.error('Unhandled exception: %s', e, exc_info=True)
+        return jsonify(error="Internal Server Error"), 500
+
     # -- Register blueprints -----------------------------------------------
     app.register_blueprint(api_bp)
 
