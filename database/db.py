@@ -21,7 +21,7 @@ def _get_connection():
         if _is_postgres():
             import psycopg2
             from psycopg2.extras import RealDictCursor
-            _local.conn = psycopg2.connect(db_cfg.DATABASE_URL, cursor_factory=RealDictCursor)
+            _local.conn = psycopg2.connect(db_cfg.DATABASE_URL, cursor_factory=RealDictCursor, connect_timeout=10)
         else:
             _local.conn = sqlite3.connect(_db_path, check_same_thread=False)
             _local.conn.row_factory = sqlite3.Row
@@ -94,16 +94,19 @@ def init_db():
         
     tables, indexes = get_schema(is_postgres=_is_postgres())
     
-    with get_db() as conn:
-        for stmt in tables:
-            _execute(conn, stmt)
-        for stmt in indexes:
-            _execute(conn, stmt)
-            
-    if _is_postgres():
-        logger.info('Database initialised on PostgreSQL (hosted)')
-    else:
-        logger.info('Database initialised at %s', _db_path)
+    try:
+        with get_db() as conn:
+            for stmt in tables:
+                _execute(conn, stmt)
+            for stmt in indexes:
+                _execute(conn, stmt)
+                
+        if _is_postgres():
+            logger.info('Database initialised on PostgreSQL (hosted)')
+        else:
+            logger.info('Database initialised at %s', _db_path)
+    except Exception as e:
+        logger.error(f"Failed to initialize database on startup (will retry on requests): {e}")
 
 
 # ---------------------------------------------------------------------------
