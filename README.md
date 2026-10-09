@@ -1,7 +1,7 @@
 # RF Monitor
 
-![RF Monitor Dashboard] -
-![Hardware] - 
+RF Monitor Dashboard- https://rf-signal-monitoring-system.vercel.app/
+Hardware-
 
 **RF Monitor** is a professional-grade Radio Frequency (RF) measurement and analysis dashboard. It ingests live broadband power measurements from a custom ESP32-based hardware node (AD8318 RF detector + NEO-7M GPS) or a built-in simulator, processes the data through a machine-learning anomaly detection pipeline, and visualizes the results on a real-time, responsive React dashboard.
 
