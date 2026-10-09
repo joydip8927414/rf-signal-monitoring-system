@@ -561,3 +561,46 @@ def get_settings():
         "alert_snr_low_db": alert_cfg.SNR_LOW_DB, "anomaly_threshold": alert_cfg.ANOMALY_SCORE_THRESHOLD,
         "if_contamination": ml_cfg.IF_CONTAMINATION, "spectrum_mode": device_cfg.SIM_SPECTRUM_MODE,
     })
+
+
+@api_bp.route("/simulator/config", methods=["GET", "POST"])
+def simulator_config():
+    """Retrieve or dynamically adjust the physics simulation parameters."""
+    try:
+        driver = getattr(_iface(), "_driver", None)
+        if not hasattr(driver, "get_config"):
+            return jsonify(error_response("Active driver is not SimulatorDriver", 400)), 400
+
+        if request.method == "POST":
+            data = request.get_json(force=True) or {}
+            updated = driver.update_config(data)
+            return jsonify(success_response(updated, "Simulation configuration updated"))
+
+        return jsonify(driver.get_config())
+    except Exception as e:
+        logger.error("simulator_config error: %s", e)
+        return jsonify(error_response(str(e))), 500
+
+
+@api_bp.route("/simulator/scenario", methods=["POST"])
+def simulator_scenario():
+    """Apply a preset physics test scenario (baseline, increased_distance, obstacle_introduced, etc.)."""
+    try:
+        driver = getattr(_iface(), "_driver", None)
+        if not hasattr(driver, "apply_scenario"):
+            return jsonify(error_response("Active driver is not SimulatorDriver", 400)), 400
+
+        data = request.get_json(force=True) or {}
+        scenario_name = data.get("scenario")
+        if not scenario_name:
+            return jsonify(error_response("Missing scenario name", 400)), 400
+
+        ok = driver.apply_scenario(scenario_name)
+        if not ok:
+            return jsonify(error_response(f"Unknown scenario '{scenario_name}'", 400)), 400
+
+        return jsonify(success_response(driver.get_config(), f"Scenario '{scenario_name}' activated"))
+    except Exception as e:
+        logger.error("simulator_scenario error: %s", e)
+        return jsonify(error_response(str(e))), 500
+

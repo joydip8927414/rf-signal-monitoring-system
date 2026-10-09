@@ -53,6 +53,9 @@ export const postCalibration = (reference_dbm, measured_dbm, notes = '') =>
 export const exportDataUrl = (format = 'json', minutes = 60) =>
   `${BASE}/api/export?format=${format}&minutes=${minutes}`;
 export const getSettings = () => client.get('/api/settings');
+export const getSimulatorConfig = () => client.get('/api/simulator/config');
+export const updateSimulatorConfig = (config) => client.post('/api/simulator/config', config);
+export const applySimulatorScenario = (scenario) => client.post('/api/simulator/scenario', { scenario });
 export const getCoverageMeasurements = async () => {
   try {
     return await client.get('/api/coverage');
@@ -78,5 +81,6 @@ export default {
   getAnalyticsSummary, getAnalyticsTimeseries, getAnalyticsDistribution,
   getAnalyticsCompare, getEvents, getAIStatus, getAIPredictions, trainAIModel,
   sendCopilotMessage, getCalibration, postCalibration, exportDataUrl, getSettings,
+  getSimulatorConfig, updateSimulatorConfig, applySimulatorScenario,
   getCoverageMeasurements,
 };
