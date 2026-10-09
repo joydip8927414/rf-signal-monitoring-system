@@ -9,6 +9,7 @@ import ChartCard from '../components/ChartCard';
 import RFPowerChart from '../components/RFPowerChart';
 import StatusBadge from '../components/StatusBadge';
 import EventTimeline from '../components/EventTimeline';
+import DocumentationCard from '../components/DocumentationCard';
 
 const fmt = (v, dp = 1) =>
   v !== null && v !== undefined && !isNaN(Number(v))
@@ -280,6 +281,9 @@ export default function Overview() {
           })}
         </div>
       )}
+
+      {/* Project Documentation Report */}
+      <DocumentationCard />
     </div>
   );
 }
