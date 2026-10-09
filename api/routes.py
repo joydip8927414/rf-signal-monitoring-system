@@ -48,7 +48,11 @@ def ingest_measurement():
         token = request.headers.get("Authorization", "").replace("Bearer ", "")
         expected_token = os.environ.get("DEVICE_TOKEN")
         
-        if expected_token and token != expected_token:
+        if not expected_token:
+            logger.error("DEVICE_TOKEN is not set in environment variables!")
+            return jsonify(error_response("Server configuration error", 500)), 500
+            
+        if token != expected_token:
             return jsonify(error_response("Unauthorized", 401)), 401
 
         data = request.get_json(force=True)

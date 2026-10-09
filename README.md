@@ -44,60 +44,64 @@ React Frontend (Vite)
 
 ---
 
-##  Getting Started
+##  Getting Started & Configuration
 
 ### Prerequisites
 *   **Python 3.10+**
 *   **Node.js 18+** & `npm`
 
-### 1. Backend Setup (Flask)
+### Local SQLite Setup (Default)
+By default, the application runs on SQLite. This requires zero configuration.
+1. Create a virtual environment: `python -m venv venv313`
+2. Activate it and install dependencies: `pip install -r requirements.txt`
+3. Run the backend: `python app.py`
+4. In another terminal, run frontend: `cd frontend && npm install && npm run dev`
 
-1. Navigate to the project root and create a virtual environment:
-   ```bash
-   python -m venv venv313
-   source venv313/bin/activate  # On Windows: .\venv313\Scripts\activate
-   ```
-2. Install Python dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. Run the Flask server:
-   ```bash
-   python app.py
-   ```
-   *The backend will start on `http://127.0.0.1:5000` and automatically initialize the SQLite database.*
+### PostgreSQL Setup (Production)
+For production (e.g., Render), the application automatically switches to PostgreSQL when `DATABASE_URL` is detected.
+1. Provision a PostgreSQL database.
+2. Set `DATABASE_URL=postgres://user:pass@host/dbname` in your environment.
+3. The application will automatically create the PostgreSQL schema on startup if it doesn't exist.
 
-### 2. Frontend Setup (React)
-
-1. Open a new terminal and navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-2. Install Node dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the Vite development server:
-   ```bash
-   npm run dev
-   ```
-   *The frontend will start on `http://localhost:5173`.*
+### Required Environment Variables
+A sample `.env.example` file is provided. Key variables:
+*   `DATABASE_URL`: PostgreSQL connection string (leaves blank for SQLite).
+*   `DEVICE_TOKEN`: Secret token for ESP32 API ingestion.
+*   `CORS_ORIGINS`: Allowed frontend origins (e.g., `https://rf-frontend.vercel.app`).
+*   `VITE_API_BASE` (Frontend): The URL of your deployed Flask API.
 
 ---
 
-##  Configuration & Environment Variables
+##  Deployment
 
-### Backend Configuration
-The backend uses a combination of `config.py` and environment variables. To connect a real ESP32 instead of the simulator, set the following before starting `app.py`:
+### Render Backend Deployment
+1. Connect your GitHub repository to Render.
+2. Create a **Web Service**.
+3. **Build Command:** `pip install -r requirements.txt`
+4. **Start Command:** `gunicorn -w 1 -b 0.0.0.0:$PORT app:app` (Important: use only 1 worker due to hardware polling).
+5. Ensure `DATABASE_URL`, `CORS_ORIGINS`, and `DEVICE_TOKEN` are set in the Render Environment tab.
 
-```bash
-# Windows PowerShell
-$env:RF_SOURCE="esp32"
-$env:DEVICE_TOKEN="your-secure-token" # Required for API ingestion authentication
-```
+### Vercel Frontend Deployment
+1. Connect the `frontend/` directory to Vercel.
+2. **Framework Preset:** Vite
+3. **Environment Variable:** Set `VITE_API_BASE` to your Render backend URL (e.g., `https://my-rf-api.onrender.com`). No trailing slash.
 
-### ESP32 Hardware Integration
-For a hosted setup, flash your ESP32 to POST JSON data to `/api/device/measurements`. Ensure the payload includes `signal_dbm`, `adc_value`, `detector_voltage`, and optional `latitude`/`longitude`. Provide the `DEVICE_TOKEN` in the `Authorization` header.
+---
+
+## 🗄️ Database Migration & Backup
+
+### Migrating SQLite to PostgreSQL
+If you have existing data in SQLite and want to move to PostgreSQL:
+1. Ensure both `data/rf_monitor.db` exists and `DATABASE_URL` is set in your terminal.
+2. Run the safe migration utility:
+   ```bash
+   python scripts/migrate_sqlite_to_postgres.py
+   ```
+   *Note: This script will NOT overwrite existing Postgres data or delete the SQLite file.*
+
+### Backup and Recovery
+*   **SQLite:** Simply copy the `data/rf_monitor.db` file.
+*   **PostgreSQL:** Use `pg_dump` provided by your hosting provider to backup the cloud database.
 
 ---
 
@@ -105,7 +109,7 @@ For a hosted setup, flash your ESP32 to POST JSON data to `/api/device/measureme
 
 The project includes a comprehensive Python test suite for the device drivers and API ingestion.
 
-To run the tests:
+To run the local tests (uses SQLite by default):
 ```bash
 python -m unittest discover tests
 ```
@@ -115,3 +119,4 @@ python -m unittest discover tests
 ##  License
 
 This project is licensed under the MIT License.
+

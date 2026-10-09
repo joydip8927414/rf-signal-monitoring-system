@@ -16,11 +16,12 @@ class FlaskConfig:
     DEBUG = os.environ.get('FLASK_DEBUG', 'true').lower() == 'true'
     HOST = os.environ.get('FLASK_HOST', '127.0.0.1')
     PORT = int(os.environ.get('FLASK_PORT', '5000'))
-    CORS_ORIGINS = ['*']
+    CORS_ORIGINS = os.environ.get('CORS_ORIGINS', '*').split(',')
 
 
 class DatabaseConfig:
     DB_PATH = BASE_DIR / 'data' / 'rf_monitor.db'
+    DATABASE_URL = os.environ.get('DATABASE_URL')
     ECHO = os.environ.get('DB_ECHO', 'false').lower() == 'true'
 
 
