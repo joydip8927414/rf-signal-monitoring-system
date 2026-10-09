@@ -886,30 +886,9 @@ input, select, textarea { font-family: inherit; }
     padding: 14px;
   }
 
-  .doc-card .btn-doc-download,
-  .doc-card .btn-doc-preview {
-    width: 100%;
+  .doc-card .btn {
+    flex: 1;
     justify-content: center;
   }
-}
-
-/* ─── Project Documentation Card Styles ─────────────────────────────────── */
-.btn-doc-download:hover {
-  opacity: 0.93;
-  transform: translateY(-1px);
-}
-
-.btn-doc-download:focus-visible {
-  outline: 2px solid #6b21a8;
-  outline-offset: 3px;
-}
-
-.btn-doc-preview:hover {
-  background-color: #E5E7EB !important;
-}
-
-.btn-doc-preview:focus-visible {
-  outline: 2px solid #111827;
-  outline-offset: 3px;
 }
 
